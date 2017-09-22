@@ -127,6 +127,11 @@ object LogConfig {
   val LeaderReplicationThrottledReplicasProp = "leader.replication.throttled.replicas"
   val FollowerReplicationThrottledReplicasProp = "follower.replication.throttled.replicas"
 
+  /////////////////////////////////////////////////////////////////
+  // 优先级配置
+  val RetentionAutoDeleteProp = "retention.autodelete"
+  /////////////////////////////////////////////////////////////////
+
   val SegmentSizeDoc = "This configuration controls the segment file size for " +
     "the log. Retention and cleaning is always done a file at a time so a larger " +
     "segment size means fewer files but less granular control over retention."
@@ -243,7 +248,8 @@ object LogConfig {
     import org.apache.kafka.common.config.ConfigDef.Range._
     import org.apache.kafka.common.config.ConfigDef.Type._
     import org.apache.kafka.common.config.ConfigDef.ValidString._
-
+    ///////////////////////////////////////////////////////////////////
+    //.define(RetentionAutoDeleteProp,INT,0,MEDIUM,"fiberhome")
     new LogConfigDef()
       .define(SegmentBytesProp, INT, Defaults.SegmentSize, atLeast(Message.MinMessageOverhead), MEDIUM,
         SegmentSizeDoc, KafkaConfig.LogSegmentBytesProp)
@@ -260,6 +266,9 @@ object LogConfig {
       // can be negative. See kafka.log.LogManager.cleanupSegmentsToMaintainSize
       .define(RetentionBytesProp, LONG, Defaults.RetentionSize, MEDIUM, RetentionSizeDoc,
         KafkaConfig.LogRetentionBytesProp)
+      .define(RetentionAutoDeleteProp,INT,0,MEDIUM,s"fiberhome $RetentionAutoDeleteProp","kafka server config is null")
+
+
       // can be negative. See kafka.log.LogManager.cleanupExpiredSegments
       .define(RetentionMsProp, LONG, Defaults.RetentionMs, MEDIUM, RetentionMsDoc,
         KafkaConfig.LogRetentionTimeMillisProp)
@@ -295,6 +304,7 @@ object LogConfig {
         LeaderReplicationThrottledReplicasDoc, LeaderReplicationThrottledReplicasProp)
       .define(FollowerReplicationThrottledReplicasProp, LIST, Defaults.FollowerReplicationThrottledReplicas, ThrottledReplicaListValidator, MEDIUM,
         FollowerReplicationThrottledReplicasDoc, FollowerReplicationThrottledReplicasProp)
+
   }
 
   def apply(): LogConfig = LogConfig(new Properties())

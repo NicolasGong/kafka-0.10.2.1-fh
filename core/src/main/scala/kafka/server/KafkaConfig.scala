@@ -282,6 +282,10 @@ object KafkaConfig {
   val AutoCreateTopicsEnableProp = "auto.create.topics.enable"
   val MinInSyncReplicasProp = "min.insync.replicas"
   val CreateTopicPolicyClassNameProp = "create.topic.policy.class.name"
+  /******************* 低水位 *******************/
+  val LogRetentionLowWaterMark = "log.retention.lowwatermark"
+  val LogRetentionDiskThreshold = "log.retention.disk.threshold"
+
   /** ********* Replication configuration ***********/
   val ControllerSocketTimeoutMsProp = "controller.socket.timeout.ms"
   val DefaultReplicationFactorProp = "default.replication.factor"
@@ -694,6 +698,9 @@ object KafkaConfig {
       .define(LogMessageTimestampTypeProp, STRING, Defaults.LogMessageTimestampType, in("CreateTime", "LogAppendTime"), MEDIUM, LogMessageTimestampTypeDoc)
       .define(LogMessageTimestampDifferenceMaxMsProp, LONG, Defaults.LogMessageTimestampDifferenceMaxMs, atLeast(0), MEDIUM, LogMessageTimestampDifferenceMaxMsDoc)
       .define(CreateTopicPolicyClassNameProp, CLASS, null, LOW, CreateTopicPolicyClassNameDoc)
+      /** 增加保护磁盘机制的删除 **/
+      .define(LogRetentionLowWaterMark,DOUBLE,0.05,MEDIUM,"log retention low water mark")
+      .define(LogRetentionDiskThreshold,DOUBLE,0.8,MEDIUM,"log retention disk threshold")
 
       /** ********* Replication configuration ***********/
       .define(ControllerSocketTimeoutMsProp, INT, Defaults.ControllerSocketTimeoutMs, MEDIUM, ControllerSocketTimeoutMsDoc)

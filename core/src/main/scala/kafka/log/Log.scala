@@ -31,7 +31,7 @@ import org.apache.kafka.common.errors.{CorruptRecordException, OffsetOutOfRangeE
 import org.apache.kafka.common.record._
 import org.apache.kafka.common.requests.ListOffsetRequest
 
-import scala.collection.Seq
+import scala.collection.{Seq, mutable}
 import scala.collection.JavaConverters._
 import com.yammer.metrics.core.Gauge
 import org.apache.kafka.common.utils.{Time, Utils}
@@ -695,6 +695,30 @@ class Log(@volatile var dir: File,
   def deleteOldSegments(): Int = {
     if (!config.delete) return 0
     deleteRetenionMsBreachedSegments() + deleteRetentionSizeBreachedSegments()
+  }
+
+  def deleteFiberhomeOldSegments(deleteSegments: mutable.HashMap[String, Int]): Int = {
+    if (!config.delete) return 0
+    deleteRetenionDiskSizeBreachedSegments(deleteSegments)
+  }
+
+  /**
+    * 根据磁盘大小删除log日志，只删除最早的一个logSegment
+    *
+    * @return
+    */
+  private def deleteRetenionDiskSizeBreachedSegments(deleteedPartition: mutable.HashMap[String, Int]): Int = {
+    var deleteCount = deleteedPartition.get(topicPartition.toString).getOrElse(0)
+    def shouldDelete(segment: LogSegment) = {
+      val autoDelete = config.getInt(LogConfig.RetentionAutoDeleteProp)
+      if (deleteCount > 0 && autoDelete==0) {
+        deleteCount -= 1
+        true
+      } else {
+        false
+      }
+    }
+    deleteOldSegments(shouldDelete)
   }
 
   private def deleteRetenionMsBreachedSegments() : Int = {
