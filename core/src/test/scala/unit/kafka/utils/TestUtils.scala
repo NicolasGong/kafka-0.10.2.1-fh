@@ -25,6 +25,7 @@ import java.util.Properties
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 import charset.Charset
+import java.util
 
 import kafka.security.auth.{Acl, Authorizer, Resource}
 import org.apache.kafka.common.protocol.SecurityProtocol
@@ -907,7 +908,7 @@ object TestUtils extends Logging {
                    retentionCheckMs = 1000L,
                    scheduler = time.scheduler,
                    time = time,
-                   brokerState = new BrokerState())
+                   brokerState = new BrokerState(),kafkaConfig = null)
   }
 
   @deprecated("This method has been deprecated and it will be removed in a future release.", "0.10.0.0")
