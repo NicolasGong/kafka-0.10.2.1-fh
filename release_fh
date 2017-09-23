@@ -1,0 +1,6 @@
+# kafka-0.10.2.1-0.1.0
+- 增加了磁盘保护机制
+- 增加了磁盘保护机制相关的Broker配置项`log.retention.lowwatermark`和`log.retention.disk.threshold`
+- 针对Topic增加了`retention.autodelete`配置项
+- 修改了LogManager的构造和测试用例
+- 增加了release文件`release_fh`
