@@ -4,3 +4,6 @@
 - 针对Topic增加了`retention.autodelete`配置项
 - 修改了LogManager的构造和测试用例
 - 增加了release文件`release_fh`
+
+# kafka-0.10.2.1-0.1.1
+- 修改了snappy的块大小，支持可以配置，配置项`snappy.block.size`
