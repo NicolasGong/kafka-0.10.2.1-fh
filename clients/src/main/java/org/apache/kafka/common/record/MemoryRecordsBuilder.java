@@ -37,7 +37,7 @@ public class MemoryRecordsBuilder {
 
     static private final float COMPRESSION_RATE_DAMPING_FACTOR = 0.9f;
     static private final float COMPRESSION_RATE_ESTIMATION_FACTOR = 1.05f;
-    static private final int COMPRESSION_DEFAULT_BUFFER_SIZE = 1024;
+    static private final int COMPRESSION_DEFAULT_BUFFER_SIZE = 32 * 1024;
 
     private static final float[] TYPE_TO_RATE;
 
@@ -87,6 +87,7 @@ public class MemoryRecordsBuilder {
 
     private final TimestampType timestampType;
     private final CompressionType compressionType;
+    private final int snappyBlockSize;
     private final DataOutputStream appendStream;
     private final ByteBufferOutputStream bufferStream;
     private final byte magic;
@@ -105,6 +106,35 @@ public class MemoryRecordsBuilder {
 
     private MemoryRecords builtRecords;
 
+    public MemoryRecordsBuilder(ByteBuffer buffer,
+                                byte magic,
+                                CompressionType compressionType,
+                                TimestampType timestampType,
+                                long baseOffset,
+                                long logAppendTime,
+                                int writeLimit) {
+        this.magic = magic;
+        this.timestampType = timestampType;
+        this.compressionType = compressionType;
+        this.snappyBlockSize = COMPRESSION_DEFAULT_BUFFER_SIZE;
+        this.baseOffset = baseOffset;
+        this.logAppendTime = logAppendTime;
+        this.initPos = buffer.position();
+        this.writeLimit = writeLimit;
+        this.initialCapacity = buffer.capacity();
+
+        if (compressionType != CompressionType.NONE) {
+            // for compressed records, leave space for the header and the shallow message metadata
+            // and move the starting position to the value payload offset
+            buffer.position(initPos + Records.LOG_OVERHEAD + Record.recordOverhead(magic));
+        }
+
+        // create the stream
+        bufferStream = new ByteBufferOutputStream(buffer);
+        appendStream = wrapForOutput(bufferStream, compressionType, magic, this.snappyBlockSize);
+
+    }
+
     /**
      * Construct a new builder.
      *
@@ -122,6 +152,7 @@ public class MemoryRecordsBuilder {
     public MemoryRecordsBuilder(ByteBuffer buffer,
                                 byte magic,
                                 CompressionType compressionType,
+                                int snappyBlockSize,
                                 TimestampType timestampType,
                                 long baseOffset,
                                 long logAppendTime,
@@ -129,6 +160,7 @@ public class MemoryRecordsBuilder {
         this.magic = magic;
         this.timestampType = timestampType;
         this.compressionType = compressionType;
+        this.snappyBlockSize = snappyBlockSize;
         this.baseOffset = baseOffset;
         this.logAppendTime = logAppendTime;
         this.initPos = buffer.position();
@@ -143,7 +175,7 @@ public class MemoryRecordsBuilder {
 
         // create the stream
         bufferStream = new ByteBufferOutputStream(buffer);
-        appendStream = wrapForOutput(bufferStream, compressionType, magic, COMPRESSION_DEFAULT_BUFFER_SIZE);
+        appendStream = wrapForOutput(bufferStream, compressionType, magic, this.snappyBlockSize);
     }
 
     public ByteBuffer buffer() {

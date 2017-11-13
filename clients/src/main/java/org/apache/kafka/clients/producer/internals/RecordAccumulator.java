@@ -66,6 +66,7 @@ public final class RecordAccumulator {
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
     private final CompressionType compression;
+    private final int snappyBlockSize;
     private final long lingerMs;
     private final long retryBackoffMs;
     private final BufferPool free;
@@ -103,6 +104,33 @@ public final class RecordAccumulator {
         this.appendsInProgress = new AtomicInteger(0);
         this.batchSize = batchSize;
         this.compression = compression;
+        this.snappyBlockSize = 32 * 1024;
+        this.lingerMs = lingerMs;
+        this.retryBackoffMs = retryBackoffMs;
+        this.batches = new CopyOnWriteMap<>();
+        String metricGrpName = "producer-metrics";
+        this.free = new BufferPool(totalSize, batchSize, metrics, time, metricGrpName);
+        this.incomplete = new IncompleteRecordBatches();
+        this.muted = new HashSet<>();
+        this.time = time;
+        registerMetrics(metrics, metricGrpName);
+    }
+
+    public RecordAccumulator(int batchSize,
+                             long totalSize,
+                             CompressionType compression,
+                             int snappyBlockSize,
+                             long lingerMs,
+                             long retryBackoffMs,
+                             Metrics metrics,
+                             Time time) {
+        this.drainIndex = 0;
+        this.closed = false;
+        this.flushesInProgress = new AtomicInteger(0);
+        this.appendsInProgress = new AtomicInteger(0);
+        this.batchSize = batchSize;
+        this.compression = compression;
+        this.snappyBlockSize = snappyBlockSize;
         this.lingerMs = lingerMs;
         this.retryBackoffMs = retryBackoffMs;
         this.batches = new CopyOnWriteMap<>();
@@ -192,7 +220,7 @@ public final class RecordAccumulator {
                     free.deallocate(buffer);
                     return appendResult;
                 }
-                MemoryRecordsBuilder recordsBuilder = MemoryRecords.builder(buffer, compression, TimestampType.CREATE_TIME, this.batchSize);
+                MemoryRecordsBuilder recordsBuilder = MemoryRecords.builder(buffer, compression, snappyBlockSize, TimestampType.CREATE_TIME, this.batchSize);
                 RecordBatch batch = new RecordBatch(tp, recordsBuilder, time.milliseconds());
                 FutureRecordMetadata future = Utils.notNull(batch.tryAppend(timestamp, key, value, callback, time.milliseconds()));
 

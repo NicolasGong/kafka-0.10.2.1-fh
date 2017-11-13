@@ -286,6 +286,14 @@ public class MemoryRecords extends AbstractRecords {
 
     public static MemoryRecordsBuilder builder(ByteBuffer buffer,
                                                CompressionType compressionType,
+                                               int snappyBlockSize,
+                                               TimestampType timestampType,
+                                               int writeLimit) {
+        return new MemoryRecordsBuilder(buffer, Record.CURRENT_MAGIC_VALUE, compressionType, snappyBlockSize, timestampType, 0L, System.currentTimeMillis(), writeLimit);
+    }
+
+    public static MemoryRecordsBuilder builder(ByteBuffer buffer,
+                                               CompressionType compressionType,
                                                TimestampType timestampType,
                                                int writeLimit) {
         return new MemoryRecordsBuilder(buffer, Record.CURRENT_MAGIC_VALUE, compressionType, timestampType, 0L, System.currentTimeMillis(), writeLimit);
